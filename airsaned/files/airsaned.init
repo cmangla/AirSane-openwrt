@@ -48,7 +48,7 @@ start_service() {
 	procd_append_param command --local-scanners-only="$local_scanners_only"
 	procd_append_param command --debug="$debug"
 	procd_append_param command --compatible-path="$compatible_path"
-	procd_append_param command --announce_secure="$announce_secure"
+	procd_append_param command --announce-secure="$announce_secure"
 	procd_append_param command --unix-socket="$unix_socket"
 	procd_append_param command --web-interface="$web_interface"
 	procd_append_param command --reset-option="$reset_option"
