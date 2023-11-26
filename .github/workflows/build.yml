@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        wrtrel: ['22.03.2', '23.05.0']
+        wrtrel: ['23.05.0']
         sdk: ['ramips-mt76x8', 'bcm27xx-bcm2708']
         include:
           - sdk: ramips-mt76x8
@@ -25,16 +25,13 @@ jobs:
       run:
         working-directory: /home/build/openwrt
     steps:
-      - name: Add feeds
-        run: echo "src-git airsaned https://github.com/cmangla/AirSane-openwrt.git^${GITHUB_SHA}" >> feeds.conf.default
-      - name: Update feeds
-        run: ./scripts/feeds update base packages airsaned
-      - name: Make defconfig
-        run: make defconfig
-      - name: Install feeds
-        run: ./scripts/feeds install airsaned
-      - name: Compile
-        run: make package/airsaned/compile -j$(nproc)
+      - name: Build
+        uses: openwrt/gh-action-sdk@main
+        env:
+          ARCH: ${{ matrix.sdk }}-${{ matrix.wrtrel }}
+          EXTRA_FEEDS: src-git airsaned https://github.com/cmangla/AirSane-openwrt.git^${{ env.GITHUB_SHA }}
+          PACKAGES: airsaned
+          
       - name: Get version
         run: |
           export MAKEFILE="./feeds/airsaned/airsaned/Makefile"
