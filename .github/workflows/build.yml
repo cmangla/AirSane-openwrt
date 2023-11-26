@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        wrtrel: ['22.03.2', '23.05.0', '23.05.2']
+        wrtrel: ['22.03.2']
         include:
           - sdk: ramips-mt76x8
             target: mipsel_24kc
