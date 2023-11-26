@@ -19,12 +19,8 @@ jobs:
             target: arm_arm1176jzf-s_vfp
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Makefile
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            airsaned/Makefile
-          sparse-checkout-cone-mode: false
 
       - name: Get version
         run: |
