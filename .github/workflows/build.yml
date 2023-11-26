@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        wrtrel: ['22.03.2', '23.05.0']
+        wrtrel: ['23.05.0', '23.05.2']
         sdk: ['ramips-mt76x8', 'bcm27xx-bcm2708']
         include:
           - sdk: ramips-mt76x8
