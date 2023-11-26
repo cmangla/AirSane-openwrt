@@ -10,6 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
+        wrtrel: ['22.03.2', '23.05.0', '23.05.2']
         include:
           - sdk: ramips-mt76x8
             target: mipsel_24kc
@@ -17,7 +18,7 @@ jobs:
             target: arm_arm1176jzf-s_vfp
     runs-on: ubuntu-latest
     container: 
-      image: openwrt/sdk:${{ matrix.sdk }}-22.03.2
+      image: openwrt/sdk:${{ matrix.sdk }}-${{ matrix.wrtrel }}
       options: --user root
     defaults:
       run:
@@ -45,5 +46,5 @@ jobs:
       - name: Upload app binary
         uses: actions/upload-artifact@v3
         with:
-          name: airsaned_${{ env.PKG_FULL_VERSION }}_${{ matrix.target }}.ipk
+          name: airsaned_${{ env.PKG_FULL_VERSION }}_${{ matrix.target }}_openwrt-${{ matrix.wrtrel }}.ipk
           path: /home/build/openwrt/bin/packages/${{ matrix.target }}/airsaned/airsaned_${{ env.PKG_FULL_VERSION }}_${{ matrix.target }}.ipk
