@@ -7,7 +7,7 @@ on:
       - '.github/**'
 
 jobs:
-  build:
+  build_post_r23:
     strategy:
       matrix:
         wrtrel: ['23.05.0', '23.05.2']
