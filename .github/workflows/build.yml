@@ -25,14 +25,7 @@ jobs:
           sparse-checkout: |
             airsaned/Makefile
           sparse-checkout-cone-mode: false
-      
-      - name: Build
-        uses: openwrt/gh-action-sdk@main
-        env:
-          ARCH: ${{ matrix.sdk }}-${{ matrix.wrtrel }}
-          EXTRA_FEEDS: src-git|airsaned|https://github.com/cmangla/AirSane-openwrt.git^${{ github.sha }}
-          PACKAGES: airsaned
-          
+
       - name: Get version
         run: |
           export MAKEFILE="/home/runner/work/AirSane-openwrt/AirSane-openwrt/airsaned/Makefile"
@@ -42,7 +35,16 @@ jobs:
           export PKG_VERSION="$PKG_SOURCE_DATE-$PKG_SOURCE_VERSION"
           echo "PKG_VERSION=$PKG_VERSION" >> $GITHUB_ENV
           echo "PKG_FULL_VERSION=$PKG_VERSION-$PKG_RELEASE" >> $GITHUB_ENV
-          
+
+      - name: Build
+        uses: openwrt/gh-action-sdk@main
+        env:
+          ARCH: ${{ matrix.sdk }}-${{ matrix.wrtrel }}
+          EXTRA_FEEDS: src-git|airsaned|https://github.com/cmangla/AirSane-openwrt.git^${{ github.sha }}
+          PACKAGES: airsaned
+          V: s
+
+
       - name: Upload app binary
         uses: actions/upload-artifact@v3
         with:
