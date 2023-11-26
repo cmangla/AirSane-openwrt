@@ -29,7 +29,6 @@ jobs:
           export PKG_SOURCE_VERSION=`sed -n "s/^PKG_SOURCE_VERSION:=\(.*\)$/\1/p" $MAKEFILE`
           export PKG_RELEASE=`sed -n "s/^PKG_RELEASE:=\(.*\)$/\1/p" $MAKEFILE`
           export PKG_VERSION="$PKG_SOURCE_DATE-$PKG_SOURCE_VERSION"
-          echo "PKG_VERSION=$PKG_VERSION" >> $GITHUB_ENV
           echo "PKG_FULL_VERSION=$PKG_VERSION-$PKG_RELEASE" >> $GITHUB_ENV
 
       - name: Build
@@ -38,11 +37,14 @@ jobs:
           ARCH: ${{ matrix.sdk }}-${{ matrix.wrtrel }}
           EXTRA_FEEDS: src-git|airsaned|https://github.com/cmangla/AirSane-openwrt.git^${{ github.sha }}
           PACKAGES: airsaned
-          V: s
 
+      - run: |
+          ls -Rl /artifacts/
+          ls -Rl bin/
+          echo "HOME=$HOME"
 
       - name: Upload app binary
         uses: actions/upload-artifact@v3
         with:
           name: airsaned_${{ env.PKG_FULL_VERSION }}_${{ matrix.target }}_openwrt-${{ matrix.wrtrel }}.ipk
-          path: /artifacts/packages/${{ matrix.target }}/airsaned/airsaned_${{ env.PKG_FULL_VERSION }}_${{ matrix.target }}.ipk
+          path: /artifacts/bin/packages/${{ matrix.target }}/airsaned/airsaned_${{ env.PKG_FULL_VERSION }}_${{ matrix.target }}.ipk
