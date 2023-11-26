@@ -18,18 +18,12 @@ jobs:
           - sdk: bcm27xx-bcm2708
             target: arm_arm1176jzf-s_vfp
     runs-on: ubuntu-latest
-    container: 
-      image: openwrt/sdk:${{ matrix.sdk }}-${{ matrix.wrtrel }}
-      options: --user root
-    defaults:
-      run:
-        working-directory: /home/build/openwrt
     steps:
       - name: Build
         uses: openwrt/gh-action-sdk@main
         env:
           ARCH: ${{ matrix.sdk }}-${{ matrix.wrtrel }}
-          EXTRA_FEEDS: src-git airsaned https://github.com/cmangla/AirSane-openwrt.git^${{ env.GITHUB_SHA }}
+          EXTRA_FEEDS: src-git airsaned https://github.com/cmangla/AirSane-openwrt.git^${{ github.sha }}
           PACKAGES: airsaned
           
       - name: Get version
