@@ -47,5 +47,5 @@ jobs:
       - name: Upload app binary
         uses: actions/upload-artifact@v3
         with:
-          name: airsaned_${{ env.PKG_FULL_VERSION }}_${{ matrix.target }}_openwrt-${{ matrix.wrtrel }}.ipk
+          name: airsaned_${{ env.PKG_FULL_VERSION }}_openwrt-${{ matrix.wrtrel }}_${{ matrix.target }}.ipk
           path: /home/build/openwrt/bin/packages/${{ matrix.target }}/airsaned/airsaned_${{ env.PKG_FULL_VERSION }}_${{ matrix.target }}.ipk
