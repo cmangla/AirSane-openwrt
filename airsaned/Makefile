@@ -8,6 +8,8 @@ PKG_SOURCE_URL:=https://github.com/SimulPiscator/AirSane.git
 PKG_SOURCE_VERSION:=1eb3f1b
 PKG_SOURCE_DATE:=2023-11-26
 PKG_VERSION:=$(PKG_SOURCE_DATE)-$(PKG_SOURCE_VERSION)
+PKG_MIRROR_HASH:=skip
+HASH:=skip
 
 PKG_MAINTAINER:=SimulPiscator <example@example.com>
 PKG_LICENSE:=GPL-3.0
