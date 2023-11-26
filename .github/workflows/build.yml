@@ -19,6 +19,11 @@ jobs:
             target: arm_arm1176jzf-s_vfp
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
       - name: Build
         uses: openwrt/gh-action-sdk@main
         env:
@@ -39,4 +44,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: airsaned_${{ env.PKG_FULL_VERSION }}_${{ matrix.target }}_openwrt-${{ matrix.wrtrel }}.ipk
-          path: /home/build/openwrt/bin/packages/${{ matrix.target }}/airsaned/airsaned_${{ env.PKG_FULL_VERSION }}_${{ matrix.target }}.ipk
+          path: /artifacts/packages/${{ matrix.target }}/airsaned/airsaned_${{ env.PKG_FULL_VERSION }}_${{ matrix.target }}.ipk
