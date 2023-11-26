@@ -30,7 +30,7 @@ jobs:
           ARCH: ${{ matrix.sdk }}-${{ matrix.wrtrel }}
           EXTRA_FEEDS: src-git|airsaned|https://github.com/cmangla/AirSane-openwrt.git^${{ github.sha }}
           PACKAGES: airsaned
-          NO_DEFAULT_FEEDS: 1
+          V: sc
           
       - name: Get version
         run: |
