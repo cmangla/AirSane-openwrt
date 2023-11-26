@@ -23,7 +23,7 @@ jobs:
         uses: openwrt/gh-action-sdk@main
         env:
           ARCH: ${{ matrix.sdk }}-${{ matrix.wrtrel }}
-          EXTRA_FEEDS: src-git|airsaned|https://github.com/cmangla/AirSane-openwrt.git@${{ github.sha }}
+          EXTRA_FEEDS: src-git|airsaned|https://github.com/cmangla/AirSane-openwrt.git^${{ github.sha }}
           PACKAGES: airsaned
           
       - name: Get version
