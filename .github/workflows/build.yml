@@ -48,22 +48,12 @@ jobs:
           export PKG_VERSION="$PKG_SOURCE_DATE-$PKG_SOURCE_VERSION"
           echo "PKG_FULL_VERSION=$PKG_VERSION-$PKG_RELEASE" >> $GITHUB_ENV
 
-      - run: find . -name 'airsaned_*.ipk'
-
-      - run: find . -name '*.ipk'
-
-      - run: realpath $(pwd)
-
-      - run: pwd
-
-      - run: echo "$HOME"
-
-      - run: env
+      - run: find . -name 'airsaned_*.ipk' -exec realpath '{}' \;
 
       - uses: actions/upload-artifact@v3
         with:
           name: airsaned_${{ env.PKG_FULL_VERSION }}_openwrt-${{ matrix.wrtrel }}_${{ matrix.sdk }}.ipk
-          path: bin/packages/**/airsaned_*.ipk
+          path: /home/build/openwrt/bin/packages/**/airsaned_*.ipk
 
   build_post_r23:
     strategy:
