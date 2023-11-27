@@ -12,5 +12,8 @@ jobs:
       - uses: actions/download-artifact@v3
       - uses: softprops/action-gh-release@v1
         with:
-          files: **/*.ipk
+          files: |
+            *.ipk
+            */*.ipk
+            */*/*.ipk
 
