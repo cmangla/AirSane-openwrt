@@ -16,10 +16,14 @@ jobs:
       contents: write
     steps:
       - uses: actions/download-artifact@v3
+      - run: find . -name '*.ipk'
       - uses: softprops/action-gh-release@v1
         with:
           files: |
+            airsaned_*.ipk
             */airsaned_*.ipk
+            */*/airsaned_*.ipk
+            */*/*/airsaned_*.ipk
             */*/*/*/airsaned_*.ipk
             */*/*/*/*/airsaned_*.ipk
 
