@@ -5,9 +5,12 @@ on:
     tags:
       - "v*.*.*"
 jobs:
+  build_all:
+    uses: ./.github/workflows/build.yml
+
   release:
     name: Obtain release artifacts
-    needs: [build, build_post_r23]
+    needs: [build_all]
     runs-on: ubuntu-latest
     permissions:
       contents: write

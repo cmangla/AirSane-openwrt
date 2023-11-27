@@ -6,6 +6,8 @@ on:
       - 'airsaned/**'
       - '.github/**'
 
+  workflow_call:
+
 jobs:
   build:
     strategy:
