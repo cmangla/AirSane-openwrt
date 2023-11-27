@@ -46,8 +46,19 @@ jobs:
           export PKG_SOURCE_VERSION=`sed -n "s/^PKG_SOURCE_VERSION:=\(.*\)$/\1/p" $MAKEFILE`
           export PKG_RELEASE=`sed -n "s/^PKG_RELEASE:=\(.*\)$/\1/p" $MAKEFILE`
           export PKG_VERSION="$PKG_SOURCE_DATE-$PKG_SOURCE_VERSION"
-          echo "PKG_VERSION=$PKG_VERSION" >> $GITHUB_ENV
           echo "PKG_FULL_VERSION=$PKG_VERSION-$PKG_RELEASE" >> $GITHUB_ENV
+
+      - run: find . -name 'airsaned_*.ipk'
+
+      - run: find . -name '*.ipk'
+
+      - run: realpath $(pwd)
+
+      - run: pwd
+
+      - run: echo "$HOME"
+
+      - run: env
 
       - uses: actions/upload-artifact@v3
         with:
