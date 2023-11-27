@@ -19,6 +19,7 @@ jobs:
       - uses: softprops/action-gh-release@v1
         with:
           files: |
-            */*.ipk
-            bin/packages/*/airsaned/airsaned_*.ipk
+            */airsaned_*.ipk
+            */*/*/*/airsaned_*.ipk
+            */*/*/*/*/airsaned_*.ipk
 
