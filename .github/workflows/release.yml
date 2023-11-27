@@ -1,0 +1,16 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+jobs:
+  release:
+    name: Obtain release artifacts
+    needs: [build, build_post_r23]
+    steps:
+      - uses: actions/download-artifact@v3
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: **/*.ipk
+
