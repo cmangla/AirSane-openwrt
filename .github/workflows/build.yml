@@ -18,25 +18,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - uses: actions/checkout@v4
-
       - uses: openwrt/gh-action-sdk@main
         env:
           ARCH: ${{ matrix.sdk }}-${{ matrix.wrtrel }}
           EXTRA_FEEDS: src-git|airsaned|https://github.com/cmangla/AirSane-openwrt.git^${{ github.sha }}
           PACKAGES: airsaned
           CONTAINER: openwrt/sdk
-
-      - name: Get version
-        run: |
-          export MAKEFILE="airsaned/Makefile"
-          export PKG_SOURCE_DATE=`sed -n "s/^PKG_SOURCE_DATE:=\(.*\)$/\1/p" $MAKEFILE`
-          export PKG_SOURCE_VERSION=`sed -n "s/^PKG_SOURCE_VERSION:=\(.*\)$/\1/p" $MAKEFILE`
-          export PKG_RELEASE=`sed -n "s/^PKG_RELEASE:=\(.*\)$/\1/p" $MAKEFILE`
-          export PKG_VERSION="$PKG_SOURCE_DATE-$PKG_SOURCE_VERSION"
-          echo "PKG_FULL_VERSION=$PKG_VERSION-$PKG_RELEASE" >> $GITHUB_ENV
-
+      - run: bash ./.github/work.sh pkg-ver airsaned/Makefile | tee $GITHUB_ENV
+        shell: bash
       - uses: actions/upload-artifact@v3
         with:
           name: airsaned_${{ env.PKG_FULL_VERSION }}_openwrt-${{ matrix.wrtrel }}_${{ matrix.sdk }}.ipk
