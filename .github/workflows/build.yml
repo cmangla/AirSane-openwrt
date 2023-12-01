@@ -19,14 +19,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: openwrt/gh-action-sdk@main
         env:
           ARCH: ${{ matrix.sdk }}-${{ matrix.wrtrel }}
           EXTRA_FEEDS: src-git|airsaned|https://github.com/cmangla/AirSane-openwrt.git^${{ github.sha }}
           PACKAGES: airsaned
-          CONTAINER: openwrt/sdk
+
       - run: bash ./.github/work.sh pkg-ver airsaned/Makefile | tee $GITHUB_ENV
         shell: bash
+
       - uses: actions/upload-artifact@v3
         with:
           name: airsaned_${{ env.PKG_FULL_VERSION }}_openwrt-${{ matrix.wrtrel }}_${{ matrix.sdk }}.ipk
