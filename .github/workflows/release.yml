@@ -1,9 +1,10 @@
-name: release
+name: Make release when tag is created
 
 on:
-  create:
+  push:
     tags:
-      - "v*"
+      - v*
+
 jobs:
   build_all:
     uses: ./.github/workflows/build.yml
