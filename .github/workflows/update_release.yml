@@ -6,9 +6,16 @@ on:
   workflow_dispatch: # Allows manual trigger
 
 jobs:
-  update-release:
+  check_release_exists:
+    name: Check whether upstream has any changes
     runs-on: ubuntu-latest
-
+    outputs:
+      release_exists: ${{ steps.check_release.outputs.exists }}
+      tag: ${{ steps.fetch_release.outputs.tag }}
+      release_date: ${{ steps.fetch_release.outputs.release_date }}
+      release_title: ${{ steps.fetch_release.outputs.release_title }}
+      release_url: ${{ steps.fetch_release.outputs.release_url }}
+      commit_hash: ${{ steps.fetch_commit_sha.outputs.commit_hash }}
     steps:
       - name: Checkout current repository
         uses: actions/checkout@v4
@@ -27,6 +34,10 @@ jobs:
           echo "release_date=${release_date}" >> $GITHUB_ENV
           echo "release_title=${release_title}" >> $GITHUB_ENV
           echo "release_url=${release_url}" >> $GITHUB_ENV
+          echo "::set-output name=tag::${tag}"
+          echo "::set-output name=release_date::${release_date}"
+          echo "::set-output name=release_title::${release_title}"
+          echo "::set-output name=release_url::${release_url}"
           rm -f "${tmpfile}"
 
       - name: Fetch commit SHA for the latest tag
@@ -35,6 +46,7 @@ jobs:
           tag=${{ env.tag }}
           commit_hash=$(curl -s "https://api.github.com/repos/SimulPiscator/AirSane/tags" | jq -r --arg TAG "$tag" '.[] | select(.name == $TAG) | .commit.sha')
           echo "commit_hash=${commit_hash}" >> $GITHUB_ENV
+          echo "::set-output name=commit_hash::${commit_hash}"
 
       - name: Check if the release already exists
         id: check_release
@@ -42,61 +54,84 @@ jobs:
           tag=${{ env.tag }}
           if git rev-parse "refs/tags/${tag}" >/dev/null 2>&1; then
             echo "Release already exists."
-            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "::set-output name=exists::true"
           else
             echo "Release ${tag} does not yet exist."
-            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "::set-output name=exists::false"
           fi
+
+  update_makefile:
+    name: Update Makefile with latest hashes
+    runs-on: ubuntu-latest
+    needs: check_release_exists
+    if: needs.check_release_exists.outputs.release_exists != 'true'
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
 
       - name: Update Makefile with new release information
         id: update_makefile
-        if: steps.check_release.outputs.exists != 'true'
         run: |
-          tag=${{ env.tag }}
-          release_date=${{ env.release_date }}
-          commit_hash=${{ env.commit_hash }}
+          tag=${{ needs.check_release_exists.outputs.tag }}
+          release_date=${{ needs.check_release_exists.outputs.release_date }}
+          commit_hash=${{ needs.check_release_exists.outputs.commit_hash }}
           sed -i "s/^PKG_SOURCE_VERSION:=.*/PKG_SOURCE_VERSION:=${tag}/" airsaned/Makefile
           sed -i "s/^PKG_SOURCE_DATE:=.*/PKG_SOURCE_DATE:=${release_date}/" airsaned/Makefile
           sed -i "s/^PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=${commit_hash}/" airsaned/Makefile
 
       - name: Check for changes
         id: check_changes
-        if: steps.check_release.outputs.exists != 'true'
         run: |
           if git diff --exit-code; then
             echo "No changes to commit."
-            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "::set-output name=changes::false"
           else
             echo "changes=true" >> $GITHUB_OUTPUT
+            echo "::set-output name=changes::true"
           fi
 
       - name: Commit changes
-        id: commit_changes
-        if: steps.check_release.outputs.exists != 'true' && steps.check_changes.outputs.changes != 'false'
+        if: steps.check_changes.outputs.changes == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git commit -a -m "feat: update AirSane source reference to ${tag}"
+          git tag "${{ needs.check_release_exists.outputs.tag }}"
+          git commit -a -m "feat: update AirSane source reference to ${{ needs.check_release_exists.outputs.tag }}"
 
       - name: Push changes
-        id: push_changes
-        if: steps.check_release.outputs.exists != 'true' && steps.check_changes.outputs.changes != 'false'
+        if: steps.check_changes.outputs.changes == 'true'
         uses: ad-m/github-push-action@v0.8.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: master
+          tags: true
 
-      - name: Create a new release
-        id: create_release
-        if: steps.check_release.outputs.exists != 'true'
-        uses: comnoco/create-release-action@v2.0.5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build_all:
+    name: Build all packages for targets
+    uses: ./.github/workflows/build.yml
+    needs: update_makefile
+
+  create_release:
+    name: Create new release
+    runs-on: ubuntu-latest
+    needs: update_makefile
+    if: needs.check_release_exists.outputs.release_exists == 'false'
+    steps:
+      - uses: actions/download-artifact@v4
+      - run: |
+          mkdir release-packages
+          find . -type d -name '*.ipk' | while IFS= read -r pk; do
+            pkf=$(find "$pk" -name '*.ipk' -type f | tail -n1)
+            cp -v "$pkf" "release-packages/${pk}"
+          done
+      - name: Create new release from tag
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.tag }}
-          release_name: ${{ env.release_title }}
-          body: |
-            Update AirSane to version ${{ env.tag }}. Released on ${{ env.release_date }}.
-            [View source release here](${{ env.release_url }}).
+          tag_name: ${{ needs.check_release_exists.outputs.tag }}
+          release_name: ${{ needs.check_release_exists.outputs.release_title }}
           draft: false
           prerelease: false
+          body: |
+            Update AirSane to version ${{ needs.check_release_exists.outputs.tag }}. Released on ${{ needs.check_release_exists.outputs.release_date }}.
+            [View source release here](${{ needs.check_release_exists.outputs.release_url }}).
+          files: release-packages/*.ipk
