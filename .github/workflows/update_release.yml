@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Checkout current repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Fetch latest release from AirSane
         id: fetch_release
@@ -34,11 +34,14 @@ jobs:
         run: |
           tag=$(jq -r .tag_name latest_release.json)
           if git rev-parse "refs/tags/${tag}" >/dev/null 2>&1; then
-            echo "Release ${tag} already exists. Exiting."
-            exit 0
+            echo "::set-output name=exists::false"
+          else
+            echo "::set-output name=exists::true"
           fi
 
       - name: Update Makefile with new release information
+        id: update_makefile
+        if: steps.check_release.outputs.exists != 'true'
         run: |
           tag=${{ env.tag }}
           release_date=${{ env.release_date }}
@@ -49,30 +52,34 @@ jobs:
 
       - name: Check for changes
         id: check_changes
+        if: steps.check_release.outputs.exists != 'true'
         run: |
-          git add airsaned/Makefile
-          if git diff --cached --quiet; then
+          if git diff --exit-code; then
             echo "No changes to commit."
-            exit 0
+            echo "::set-output name=changes::false"
+          else
+            echo "::set-output name=changes::true"
           fi
 
       - name: Commit changes
-        if: steps.check_changes.outputs.changes != 'false'
+        id: commit_changes
+        if: steps.check_release.outputs.exists != 'true' && steps.check_changes.outputs.changes != 'false'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git commit -m "Update AirSane to version ${tag}"
 
       - name: Push changes
-        if: steps.check_changes.outputs.changes != 'false'
+        id: push_changes
+        if: steps.check_release.outputs.exists != 'true' && steps.check_changes.outputs.changes != 'false'
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: master
 
       - name: Create a new release
-        if: steps.check_changes.outputs.changes != 'false'
         id: create_release
+        if: steps.check_release.outputs.exists != 'true'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
