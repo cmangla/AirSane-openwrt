@@ -1,7 +1,8 @@
-name: build
+name: Build Airsaned packages
 
 on:
   workflow_call:
+  workflow_dispatch:
 
 jobs:
   build:
