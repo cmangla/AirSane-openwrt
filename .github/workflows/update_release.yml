@@ -20,14 +20,19 @@ jobs:
           tag=$(jq -r .tag_name latest_release.json)
           published_at=$(jq -r .published_at latest_release.json)
           release_date=$(echo "$published_at" | cut -d'T' -f1)
-          commit_hash=$(jq -r .target_commitish latest_release.json)
           release_title=$(jq -r .name latest_release.json)
           release_url=$(jq -r .html_url latest_release.json)
           echo "tag=${tag}" >> $GITHUB_ENV
           echo "release_date=${release_date}" >> $GITHUB_ENV
-          echo "commit_hash=${commit_hash}" >> $GITHUB_ENV
           echo "release_title=${release_title}" >> $GITHUB_ENV
           echo "release_url=${release_url}" >> $GITHUB_ENV
+
+      - name: Fetch commit SHA for the latest tag
+        id: fetch_commit_sha
+        run: |
+          tag=${{ env.tag }}
+          commit_hash=$(curl -s "https://api.github.com/repos/SimulPiscator/AirSane/tags" | jq -r --arg TAG "$tag" '.[] | select(.name == $TAG) | .commit.sha')
+          echo "commit_hash=${commit_hash}" >> $GITHUB_ENV
 
       - name: Check if the release already exists
         id: check_release
