@@ -1,11 +1,6 @@
 name: build
 
 on:
-  push:
-    paths:
-      - 'airsaned/**'
-      - '.github/**'
-
   workflow_call:
 
 jobs:
