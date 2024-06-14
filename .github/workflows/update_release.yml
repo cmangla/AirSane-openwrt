@@ -21,9 +21,13 @@ jobs:
           published_at=$(jq -r .published_at latest_release.json)
           release_date=$(echo "$published_at" | cut -d'T' -f1)
           commit_hash=$(jq -r .target_commitish latest_release.json)
+          release_title=$(jq -r .name latest_release.json)
+          release_url=$(jq -r .html_url latest_release.json)
           echo "tag=${tag}" >> $GITHUB_ENV
           echo "release_date=${release_date}" >> $GITHUB_ENV
           echo "commit_hash=${commit_hash}" >> $GITHUB_ENV
+          echo "release_title=${release_title}" >> $GITHUB_ENV
+          echo "release_url=${release_url}" >> $GITHUB_ENV
 
       - name: Check if the release already exists
         id: check_release
@@ -43,26 +47,40 @@ jobs:
           sed -i "s/^PKG_SOURCE_DATE:=.*/PKG_SOURCE_DATE:=${release_date}/" airsaned/Makefile
           sed -i "s/^PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=${commit_hash}/" airsaned/Makefile
 
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git add airsaned/Makefile
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
       - name: Commit changes
+        if: steps.check_changes.outputs.changes != 'false'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add airsaned/Makefile
           git commit -m "Update AirSane to version ${tag}"
 
       - name: Push changes
+        if: steps.check_changes.outputs.changes != 'false'
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: master
 
       - name: Create a new release
+        if: steps.check_changes.outputs.changes != 'false'
         id: create_release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ env.tag }}
-          release_name: "AirSane ${{ env.tag }}"
-          body: "Update AirSane to version ${{ env.tag }}. Released on ${{ env.release_date }}."
+          release_name: ${{ env.release_title }}
+          body: |
+            Update AirSane to version ${{ env.tag }}. Released on ${{ env.release_date }}.
+            [View source release here](${{ env.release_url }}).
           draft: false
           prerelease: false
-          generate_release_notes: true
