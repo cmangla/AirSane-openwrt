@@ -16,6 +16,7 @@ jobs:
       release_title: ${{ steps.fetch_release.outputs.release_title }}
       release_url: ${{ steps.fetch_release.outputs.release_url }}
       commit_hash: ${{ steps.fetch_commit_sha.outputs.commit_hash }}
+      tarball_url: ${{ steps.fetch_release.outputs.tarball_url }}
     steps:
       - name: Checkout current repository
         uses: actions/checkout@v4
@@ -25,7 +26,7 @@ jobs:
         run: |
           # Download latest release info to temporary file
           tmpfile=$(mktemp)
-          curl -s https://api.github.com/repos/SimulPiscator/AirSane/releases/latest > "${tmpfile}"
+          curl -sL https://api.github.com/repos/SimulPiscator/AirSane/releases/latest > "${tmpfile}"
 
           # Extract meta information
           echo "tag=$(jq -r .tag_name "${tmpfile}")" >> $GITHUB_OUTPUT
@@ -41,7 +42,7 @@ jobs:
         id: fetch_commit_sha
         run: |
           tag=${{ steps.fetch_release.outputs.tag }}
-          commit_hash=$(curl -s "https://api.github.com/repos/SimulPiscator/AirSane/tags" | jq -r --arg TAG "$tag" '.[] | select(.name == $TAG) | .commit.sha')
+          commit_hash=$(curl -sL "https://api.github.com/repos/SimulPiscator/AirSane/tags" | jq -r --arg TAG "$tag" '.[] | select(.name == $TAG) | .commit.sha')
           echo "commit_hash=${commit_hash}" >> $GITHUB_OUTPUT
 
       - name: Check if the release already exists
