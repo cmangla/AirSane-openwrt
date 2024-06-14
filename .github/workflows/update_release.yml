@@ -114,7 +114,7 @@ jobs:
   create_release:
     name: Create new release
     runs-on: ubuntu-latest
-    needs: update_makefile
+    needs: build_all
     if: needs.check_release_exists.outputs.release_exists == 'false'
     steps:
       - uses: actions/download-artifact@v4
