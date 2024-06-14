@@ -34,10 +34,10 @@ jobs:
           echo "release_date=${release_date}" >> $GITHUB_ENV
           echo "release_title=${release_title}" >> $GITHUB_ENV
           echo "release_url=${release_url}" >> $GITHUB_ENV
-          echo "::set-output name=tag::${tag}"
-          echo "::set-output name=release_date::${release_date}"
-          echo "::set-output name=release_title::${release_title}"
-          echo "::set-output name=release_url::${release_url}"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+          echo "release_date=${release_date}" >> $GITHUB_OUTPUT
+          echo "release_title=${release_title}" >> $GITHUB_OUTPUT
+          echo "release_url=${release_url}" >> $GITHUB_OUTPUT
           rm -f "${tmpfile}"
 
       - name: Fetch commit SHA for the latest tag
@@ -46,7 +46,7 @@ jobs:
           tag=${{ env.tag }}
           commit_hash=$(curl -s "https://api.github.com/repos/SimulPiscator/AirSane/tags" | jq -r --arg TAG "$tag" '.[] | select(.name == $TAG) | .commit.sha')
           echo "commit_hash=${commit_hash}" >> $GITHUB_ENV
-          echo "::set-output name=commit_hash::${commit_hash}"
+          echo "commit_hash=${commit_hash}" >> $GITHUB_OUTPUT
 
       - name: Check if the release already exists
         id: check_release
@@ -54,10 +54,10 @@ jobs:
           tag=${{ env.tag }}
           if git rev-parse "refs/tags/${tag}" >/dev/null 2>&1; then
             echo "Release already exists."
-            echo "::set-output name=exists::true"
+            echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "Release ${tag} does not yet exist."
-            echo "::set-output name=exists::false"
+            echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
   update_makefile:
@@ -84,10 +84,9 @@ jobs:
         run: |
           if git diff --exit-code; then
             echo "No changes to commit."
-            echo "::set-output name=changes::false"
+            echo "changes=false" >> $GITHUB_OUTPUT
           else
             echo "changes=true" >> $GITHUB_OUTPUT
-            echo "::set-output name=changes::true"
           fi
 
       - name: Commit changes
