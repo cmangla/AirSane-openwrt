@@ -30,6 +30,7 @@ jobs:
 
           echo "::group::Extract meta information"
           tag=$(jq -r .tag_name "${tmpfile}")
+          echo "Latest tag name: ${tag}"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
           echo "tag=${tag}" >> $GITHUB_ENV
           echo "release_date=$(jq -r .published_at "${tmpfile}" | cut -d'T' -f1)" >> $GITHUB_OUTPUT
@@ -53,7 +54,7 @@ jobs:
         run: |
           tag=${{ env.tag }}
           if git rev-parse "refs/tags/${tag}" >/dev/null 2>&1; then
-            echo "Release already exists."
+            echo "Release ${tag} already exists."
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "Release ${tag} does not yet exist."
@@ -77,9 +78,23 @@ jobs:
           echo "src-git airsaned ${{ github.server_url }}/${{ github.repository }}.git" >> feeds.conf.default
           ./scripts/feeds update airsaned
           ./scripts/feeds install -a -p airsaned
+      - name: Update Makefile with new release information
+        run: |
+          echo "::group::Retrieve parameters"
+          tag=${{ needs.check_release_exists.outputs.tag }}
+          release_date=${{ needs.check_release_exists.outputs.release_date }}
+          commit_hash=${{ needs.check_release_exists.outputs.commit_hash }}
+          echo "::endgroup::"
+
+          echo "::group::Replace values in Makefile"
+          sed -i "s/^PKG_RELEASE:=.*/PKG_RELEASE:=1/" airsaned/Makefile
+          sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=${tag#v}/" airsaned/Makefile
+          sed -i "s/^PKG_SOURCE_VERSION:=.*/PKG_SOURCE_VERSION:=${commit_hash}/" airsaned/Makefile
+          sed -i "s/^PKG_SOURCE_DATE:=.*/PKG_SOURCE_DATE:=${release_date}/" airsaned/Makefile
+          sed -i "s/^PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=skip/" airsaned/Makefile
+          echo "::endgroup::"
       - name: Regenerate hashes
         run: |
-          sed -i 's/^PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=skip/g' feeds/airsaned/airsaned/Makefile
           make defconfig
           make package/airsaned/download V=s
           make package/airsaned/check FIXUP=1 V=s
@@ -92,7 +107,7 @@ jobs:
   update_makefile:
     name: Update Makefile with latest hashes
     runs-on: ubuntu-latest
-    needs: calculate_tarball
+    needs: [check_release_exists, calculate_tarball]
     if: needs.check_release_exists.outputs.release_exists != 'true'
     steps:
       - name: Checkout current repository
@@ -150,7 +165,7 @@ jobs:
   create_release:
     name: Create new release
     runs-on: ubuntu-latest
-    needs: build_all
+    needs: [check_release_exists, build_all]
     if: needs.check_release_exists.outputs.release_exists == 'false'
     steps:
       - uses: actions/download-artifact@v4
