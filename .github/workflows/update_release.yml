@@ -16,7 +16,6 @@ jobs:
       release_title: ${{ steps.fetch_release.outputs.release_title }}
       release_url: ${{ steps.fetch_release.outputs.release_url }}
       commit_hash: ${{ steps.fetch_commit_sha.outputs.commit_hash }}
-      tarball_url: ${{ steps.fetch_release.outputs.tarball_url }}
     steps:
       - name: Checkout current repository
         uses: actions/checkout@v4
@@ -27,7 +26,7 @@ jobs:
           echo "::group::Download latest release info to temporary file"
           tmpfile=$(mktemp)
           curl -sL https://api.github.com/repos/SimulPiscator/AirSane/releases/latest > "${tmpfile}"
-          echo "::endgroup"
+          echo "::endgroup::"
 
           echo "::group::Extract meta information"
           tag=$(jq -r .tag_name "${tmpfile}")
@@ -36,12 +35,11 @@ jobs:
           echo "release_date=$(jq -r .published_at "${tmpfile}" | cut -d'T' -f1)" >> $GITHUB_OUTPUT
           echo "release_title=$(jq -r .name "${tmpfile}")" >> $GITHUB_OUTPUT
           echo "release_url=$(jq -r .html_url "${tmpfile}")" >> $GITHUB_OUTPUT
-          echo "tarball_url=$(jq -r .tarball_url "${tmpfile}")" >> $GITHUB_OUTPUT
-          echo "::endgroup"
+          echo "::endgroup::"
 
           echo "::group::Cleanup"
           rm -f "${tmpfile}"
-          echo "::endgroup"
+          echo "::endgroup::"
 
       - name: Fetch commit SHA for the latest tag
         id: fetch_commit_sha
@@ -71,13 +69,6 @@ jobs:
       - name: Checkout current repository
         uses: actions/checkout@v4
 
-      - name: Get upstream source hash
-        id: tarball_hash
-        run: |
-          tarball_hash=$(curl -sL "${{ needs.check_release_exists.outputs.tarball_url }}" | shasum -a 256 | cut -d " " -f 1)
-          echo "Upstream tarball hash: ${tarball_hash}"
-          echo "tarball_hash=${tarball_hash}" >> $GITHUB_OUTPUT
-
       - name: Update Makefile with new release information
         id: update_makefile
         run: |
@@ -85,16 +76,15 @@ jobs:
           tag=${{ needs.check_release_exists.outputs.tag }}
           release_date=${{ needs.check_release_exists.outputs.release_date }}
           commit_hash=${{ needs.check_release_exists.outputs.commit_hash }}
-          tarball_hash=${{ steps.tarball_hash.outputs.tarball_hash }}
-          echo "::endgroup"
+          echo "::endgroup::"
 
           echo "::group::Replace values in Makefile"
           sed -i "s/^PKG_RELEASE:=.*/PKG_RELEASE:=1/" airsaned/Makefile
           sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=${tag#v}/" airsaned/Makefile
           sed -i "s/^PKG_SOURCE_VERSION:=.*/PKG_SOURCE_VERSION:=${commit_hash}/" airsaned/Makefile
           sed -i "s/^PKG_SOURCE_DATE:=.*/PKG_SOURCE_DATE:=${release_date}/" airsaned/Makefile
-          sed -i "s/^PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=${tarball_hash}/" airsaned/Makefile
-          echo "::endgroup"
+          sed -i "s/^PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=skip/" airsaned/Makefile
+          echo "::endgroup::"
 
       - name: Check for changes
         id: check_changes
