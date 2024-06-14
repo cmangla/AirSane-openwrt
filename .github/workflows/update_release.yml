@@ -76,7 +76,6 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git tag "${tag}"
           git commit -a -m "feat: update AirSane source reference to ${tag}"
 
       - name: Push changes
@@ -86,4 +85,18 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: master
-          tags: true
+
+      - name: Create a new release
+        id: create_release
+        if: steps.check_release.outputs.exists != 'true'
+        uses: comnoco/create-release-action@v2.0.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.tag }}
+          release_name: ${{ env.release_title }}
+          body: |
+            Update AirSane to version ${{ env.tag }}. Released on ${{ env.release_date }}.
+            [View source release here](${{ env.release_url }}).
+          draft: false
+          prerelease: false
