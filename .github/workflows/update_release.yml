@@ -40,10 +40,10 @@ jobs:
           tag=$(jq -r .tag_name latest_release.json)
           if git rev-parse "refs/tags/${tag}" >/dev/null 2>&1; then
             echo "Release already exists."
-            echo "::set-output name=exists::true"
+            echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "Release ${tag} does not yet exist."
-            echo "::set-output name=exists::false"
+            echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Update Makefile with new release information
@@ -63,9 +63,9 @@ jobs:
         run: |
           if git diff --exit-code; then
             echo "No changes to commit."
-            echo "::set-output name=changes::false"
+            echo "changes=false" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=changes::true"
+            echo "changes=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Commit changes
