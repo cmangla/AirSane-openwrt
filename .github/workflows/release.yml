@@ -1,7 +1,7 @@
 name: release
 
 on:
-  push:
+  create:
     tags:
       - "v*"
 jobs:
@@ -22,7 +22,7 @@ jobs:
             pkf=$(find "$pk" -name '*.ipk' -type f | tail -n1)
             cp -v "$pkf" "release-packages/${pk}"
           done
-      - uses: softprops/action-gh-release@v1
+      - name: Create new release from tag
+        uses: softprops/action-gh-release@v1
         with:
           files: release-packages/*.ipk
-
