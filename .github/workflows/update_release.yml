@@ -24,31 +24,36 @@ jobs:
       - name: Fetch latest release from AirSane
         id: fetch_release
         run: |
-          # Download latest release info to temporary file
+          echo "::group::Download latest release info to temporary file"
           tmpfile=$(mktemp)
           curl -sL https://api.github.com/repos/SimulPiscator/AirSane/releases/latest > "${tmpfile}"
+          echo "::endgroup"
 
-          # Extract meta information
-          echo "tag=$(jq -r .tag_name "${tmpfile}")" >> $GITHUB_OUTPUT
+          echo "::group::Extract meta information"
+          tag=$(jq -r .tag_name "${tmpfile}")
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+          echo "tag=${tag}" >> $GITHUB_ENV
           echo "release_date=$(jq -r .published_at "${tmpfile}" | cut -d'T' -f1)" >> $GITHUB_OUTPUT
           echo "release_title=$(jq -r .name "${tmpfile}")" >> $GITHUB_OUTPUT
           echo "release_url=$(jq -r .html_url "${tmpfile}")" >> $GITHUB_OUTPUT
           echo "tarball_url=$(jq -r .tarball_url "${tmpfile}")" >> $GITHUB_OUTPUT
+          echo "::endgroup"
 
-          # Remove temporary file
+          echo "::group::Cleanup"
           rm -f "${tmpfile}"
+          echo "::endgroup"
 
       - name: Fetch commit SHA for the latest tag
         id: fetch_commit_sha
         run: |
-          tag=${{ steps.fetch_release.outputs.tag }}
+          tag=${{ env.tag }}
           commit_hash=$(curl -sL "https://api.github.com/repos/SimulPiscator/AirSane/tags" | jq -r --arg TAG "$tag" '.[] | select(.name == $TAG) | .commit.sha')
           echo "commit_hash=${commit_hash}" >> $GITHUB_OUTPUT
 
       - name: Check if the release already exists
         id: check_release
         run: |
-          tag=${{ steps.fetch_release.outputs.tag }}
+          tag=${{ env.tag }}
           if git rev-parse "refs/tags/${tag}" >/dev/null 2>&1; then
             echo "Release already exists."
             echo "exists=true" >> $GITHUB_OUTPUT
@@ -76,18 +81,20 @@ jobs:
       - name: Update Makefile with new release information
         id: update_makefile
         run: |
-          # Retrieve parameters
+          echo "::group::Retrieve parameters"
           tag=${{ needs.check_release_exists.outputs.tag }}
           release_date=${{ needs.check_release_exists.outputs.release_date }}
           commit_hash=${{ needs.check_release_exists.outputs.commit_hash }}
           tarball_hash=${{ steps.tarball_hash.outputs.tarball_hash }}
+          echo "::endgroup"
 
-          # Replace values in Makefile
+          echo "::group::Replace values in Makefile"
           sed -i "s/^PKG_RELEASE:=.*/PKG_RELEASE:=1/" airsaned/Makefile
           sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=${tag#v}/" airsaned/Makefile
           sed -i "s/^PKG_SOURCE_VERSION:=.*/PKG_SOURCE_VERSION:=${commit_hash}/" airsaned/Makefile
           sed -i "s/^PKG_SOURCE_DATE:=.*/PKG_SOURCE_DATE:=${release_date}/" airsaned/Makefile
           sed -i "s/^PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=${tarball_hash}/" airsaned/Makefile
+          echo "::endgroup"
 
       - name: Check for changes
         id: check_changes
