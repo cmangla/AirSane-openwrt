@@ -87,11 +87,11 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::Replace values in Makefile"
-          sed -i "s/^PKG_RELEASE:=.*/PKG_RELEASE:=1/" airsaned/Makefile
-          sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=${tag#v}/" airsaned/Makefile
-          sed -i "s/^PKG_SOURCE_VERSION:=.*/PKG_SOURCE_VERSION:=${commit_hash}/" airsaned/Makefile
-          sed -i "s/^PKG_SOURCE_DATE:=.*/PKG_SOURCE_DATE:=${release_date}/" airsaned/Makefile
-          sed -i "s/^PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=skip/" airsaned/Makefile
+          sed -i "s/^PKG_RELEASE:=.*/PKG_RELEASE:=1/" feeds/airsaned/airsaned/Makefile
+          sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=${tag#v}/" feeds/airsaned/airsaned/Makefile
+          sed -i "s/^PKG_SOURCE_VERSION:=.*/PKG_SOURCE_VERSION:=${commit_hash}/" feeds/airsaned/airsaned/Makefile
+          sed -i "s/^PKG_SOURCE_DATE:=.*/PKG_SOURCE_DATE:=${release_date}/" feeds/airsaned/airsaned/Makefile
+          sed -i "s/^PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=skip/" feeds/airsaned/airsaned/Makefile
           echo "::endgroup::"
       - name: Regenerate hashes
         run: |
