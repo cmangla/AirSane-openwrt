@@ -13,18 +13,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout current repository
+        uses: actions/checkout@v4
 
-      - uses: openwrt/gh-action-sdk@main
+      - name: Build Airsaned package for OpenWRT
+        uses: openwrt/gh-action-sdk@main
         env:
           ARCH: ${{ matrix.sdk }}-${{ matrix.wrtrel }}
-          EXTRA_FEEDS: src-git|airsaned|https://github.com/cmangla/AirSane-openwrt.git^${{ github.sha }}
+          EXTRA_FEEDS: src-git|airsaned|${{ github.server_url }}/${{ github.repository }}.git^${{ github.sha }}
           PACKAGES: airsaned
 
-      - run: bash ./.github/work.sh pkg-ver airsaned/Makefile | tee $GITHUB_ENV
+      - name: Obtain full package version
+        run: bash ./.github/work.sh pkg-ver airsaned/Makefile | tee $GITHUB_ENV
         shell: bash
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: airsaned_${{ env.PKG_FULL_VERSION }}_openwrt-${{ matrix.wrtrel }}_${{ matrix.sdk }}.ipk
           path: bin/packages/**/airsaned_*.ipk
