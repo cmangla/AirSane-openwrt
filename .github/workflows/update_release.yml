@@ -60,10 +60,39 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
+  calculate_tarball:
+    name: Calculate new hash
+    runs-on: ubuntu-latest
+    needs: check_release_exists
+    if: needs.check_release_exists.outputs.release_exists != 'true'
+    outputs:
+      pkg_mirror_hash: ${{ steps.extract.outputs.pkg_mirror_hash }}
+    steps:
+      - name: Download OpenWRT SDK
+        uses: actions/checkout@v4
+        with:
+          repository: 'openwrt/openwrt'
+      - name: Add current repository feed
+        run: |
+          echo "src-git airsaned ${{ github.server_url }}/${{ github.repository }}.git" >> feeds.conf.default
+          ./scripts/feeds update airsaned
+          ./scripts/feeds install -a -p airsaned
+      - name: Regenerate hashes
+        run: |
+          sed -i 's/^PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=skip/g' feeds/airsaned/airsaned/Makefile
+          make defconfig
+          make package/airsaned/download V=s
+          make package/airsaned/check FIXUP=1 V=s
+      - name: Extract tarball hash
+        id: extract
+        run: |
+          pkg_mirror_hash=$(grep -oP 'PKG_MIRROR_HASH:=\K.*' feeds/airsaned/airsaned/Makefile)
+          echo "pkg_mirror_hash=${pkg_mirror_hash}" >> $GITHUB_OUTPUT
+      
   update_makefile:
     name: Update Makefile with latest hashes
     runs-on: ubuntu-latest
-    needs: check_release_exists
+    needs: calculate_tarball
     if: needs.check_release_exists.outputs.release_exists != 'true'
     steps:
       - name: Checkout current repository
@@ -76,6 +105,7 @@ jobs:
           tag=${{ needs.check_release_exists.outputs.tag }}
           release_date=${{ needs.check_release_exists.outputs.release_date }}
           commit_hash=${{ needs.check_release_exists.outputs.commit_hash }}
+          pkg_mirror_hash=${{ needs.calculate_tarball.outputs.pkg_mirror_hash }}
           echo "::endgroup::"
 
           echo "::group::Replace values in Makefile"
@@ -83,7 +113,7 @@ jobs:
           sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=${tag#v}/" airsaned/Makefile
           sed -i "s/^PKG_SOURCE_VERSION:=.*/PKG_SOURCE_VERSION:=${commit_hash}/" airsaned/Makefile
           sed -i "s/^PKG_SOURCE_DATE:=.*/PKG_SOURCE_DATE:=${release_date}/" airsaned/Makefile
-          sed -i "s/^PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=skip/" airsaned/Makefile
+          sed -i "s/^PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=${pkg_mirror_hash}/" airsaned/Makefile
           echo "::endgroup::"
 
       - name: Check for changes
