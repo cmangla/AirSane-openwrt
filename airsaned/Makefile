@@ -26,7 +26,7 @@ define Package/libavahi-nobus-client
   # FIXME: use `PROVIDES` to indicate alternative libavahi-client
   SECTION:=libs
   CATEGORY:=Libraries
-  VARIANT:=dbus
+  VARIANT:=nodbus
   DEPENDS:=+avahi-nodbus-daemon
   TITLE+= (libavahi-client library without dbus dependency)
 endef
