@@ -61,5 +61,5 @@ define Package/airsaned/install
 	$(CP) files/airsaned.default $(1)/etc/config/airsaned
 endef
 
-$(eval $(call BuildPackage,airsaned))
 $(eval $(call BuildPackage,libavahi-nobus-client))
+$(eval $(call BuildPackage,airsaned))
