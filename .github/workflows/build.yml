@@ -7,25 +7,13 @@ on:
 jobs:
   build:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         wrtrel:
-          - 22.03.7
-          - 23.05.2
-          - 23.05.3
-          - 23.05.4
+          - 23.05.5
         sdk:
-          - ramips-mt76x8
-          - bcm27xx-bcm2708
-          - ath79-generic
-          - ath79-nand
-          - ath79-tiny
-          - ipq40xx-generic
           - x86-64
           - x86-generic
-          - ipq806x-generic
-          - mediatek-mt7622
-          - mvebu-cortexa9
           - bcm53xx-generic
 
     runs-on: ubuntu-latest
@@ -42,7 +30,7 @@ jobs:
           EXTRA_FEEDS: src-git|airsaned|${{ github.server_url }}/${{ github.repository }}.git^${{ github.sha }}
           PACKAGES: airsaned
           FIXUP: 1
-          V: w # s=(stdout+stderr), w=warnings, c=commands
+          V: sc # s=(stdout+stderr), w=warnings, c=commands
 
       - name: Obtain full package version
         run: bash ./.github/work.sh pkg-ver airsaned/Makefile | tee $GITHUB_ENV
