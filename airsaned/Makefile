@@ -21,12 +21,27 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+define Package/libavahi-nobus-client
+  $(call Package/avahi/Default)
+  # FIXME: use `PROVIDES` to indicate alternative libavahi-client
+  SECTION:=libs
+  CATEGORY:=Libraries
+  VARIANT:=nodbus
+  DEPENDS:=+avahi-nodbus-daemon
+  TITLE+= (libavahi-client library without dbus dependency)
+endef
+
+define Package/libavahi-nobus-client/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavahi-client.so.* $(1)/usr/lib/
+endef
+
 define Package/airsaned
   TITLE:=A SANE WebScan frontend that supports Apple's AirScan protocol
   URL:=https://github.com/SimulPiscator/AirSane
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libsane +libjpeg +libpng +libavahi-client +libusb-1.0 +libstdcpp +libatomic
+  DEPENDS:=+libsane +libjpeg +libpng +libavahi-nobus-client +libusb-1.0 +libstdcpp +libatomic
 endef
 
 define Package/airsaned/description
@@ -46,4 +61,5 @@ define Package/airsaned/install
 	$(CP) files/airsaned.default $(1)/etc/config/airsaned
 endef
 
+$(eval $(call BuildPackage,libavahi-nobus-client))
 $(eval $(call BuildPackage,airsaned))
